@@ -23,9 +23,9 @@ def test_impute_missing_values_fills_numeric_and_categorical():
         "latitude": [1.0, 2.0, 3.0],
         "longitude": [1.0, 2.0, 3.0],
         "commissioning_year": [2000, 2005, np.nan],
-        "primary_fuel": ["Coal", None, "Gas"],
+        "fuel1": ["Coal", None, "Gas"],
         "country_long": ["A", "B", None],
     })
     result = DataCleaner.impute_missing_values(df)
     assert result["capacity_mw"].isna().sum() == 0
-    assert result["primary_fuel"].isna().sum() == 0
+    assert result["fuel1"].isna().sum() == 0
