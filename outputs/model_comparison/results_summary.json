@@ -1,0 +1,36 @@
+{
+  "n_rows_used": 27438,
+  "selected_features": [
+    "capacity_mw",
+    "fuel1",
+    "country_long"
+  ],
+  "best_model": "Gradient Boosting",
+  "best_model_rmse": 805.2783055991619,
+  "all_models": [
+    {
+      "Model": "Linear Regression",
+      "RMSE": 1242.9030499915143,
+      "MAE": 326.2670911103863,
+      "R2_Score": 0.8158411362314675
+    },
+    {
+      "Model": "Ridge Regression",
+      "RMSE": 1242.9035397552423,
+      "MAE": 326.26071614179705,
+      "R2_Score": 0.8158409910964959
+    },
+    {
+      "Model": "Random Forest",
+      "RMSE": 876.1995544577162,
+      "MAE": 140.8640498766948,
+      "R2_Score": 0.9084782795973875
+    },
+    {
+      "Model": "Gradient Boosting",
+      "RMSE": 805.2783055991619,
+      "MAE": 164.81907164500979,
+      "R2_Score": 0.9226945490741442
+    }
+  ]
+}

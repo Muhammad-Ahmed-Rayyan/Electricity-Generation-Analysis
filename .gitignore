@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# OS / IDE
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+models/random_forest.pkl
