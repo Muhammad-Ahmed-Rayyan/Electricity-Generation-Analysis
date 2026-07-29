@@ -1,5 +1,6 @@
 import pandas as pd
 
+from src import config
 from src.feature_selection import FeatureSelector
 
 
@@ -13,7 +14,7 @@ def test_select_keeps_only_features_above_threshold():
     df = pd.DataFrame({
         "strong_feature": [1, 2, 3, 4, 5],
         "noise_feature": [5, 1, 4, 2, 3],
-        "Cost_USD_per_MWh": [1.1, 2.0, 3.1, 4.2, 5.0],
+        config.TARGET_COL: [1.1, 2.0, 3.1, 4.2, 5.0],
     })
     selector = FeatureSelector(threshold=0.9)
     selected = selector.select(df)
