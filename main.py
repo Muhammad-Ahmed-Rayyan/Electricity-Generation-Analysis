@@ -22,8 +22,12 @@ logger = get_logger("pipeline")
 def parse_args():
     parser = argparse.ArgumentParser(description="Power Plant Generation Predictor pipeline")
     parser.add_argument("--tune", action="store_true", help="Run hyperparameter tuning (slower)")
-    parser.add_argument("--sample", type=int, default=None,
-                         help="Randomly subsample this many rows before splitting (for quick runs)")
+    parser.add_argument(
+        "--sample",
+        type=int,
+        default=None,
+        help="Randomly subsample this many rows before splitting (for quick runs)",
+    )
     return parser.parse_args()
 
 

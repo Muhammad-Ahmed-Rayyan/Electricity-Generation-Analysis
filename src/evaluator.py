@@ -17,5 +17,8 @@ class ModelEvaluator:
 
     def evaluate(self, model_name: str, y_test, y_pred) -> dict:
         metrics = self.regression_metrics(y_test, y_pred)
-        logger.info("%s -> RMSE=%.4f MAE=%.4f R2=%.4f", model_name, metrics["RMSE"], metrics["MAE"], metrics["R2_Score"])
+        logger.info(
+            "%s -> RMSE=%.4f MAE=%.4f R2=%.4f",
+            model_name, metrics["RMSE"], metrics["MAE"], metrics["R2_Score"],
+        )
         return {"Model": model_name, **metrics}

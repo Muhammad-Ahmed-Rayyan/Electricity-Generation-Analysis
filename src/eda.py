@@ -1,13 +1,13 @@
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from scipy.stats import norm
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+import seaborn as sns  # noqa: E402
+from scipy.stats import norm  # noqa: E402
 
-from src import config
-from src.utils import get_logger
+from src import config  # noqa: E402
+from src.utils import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -79,5 +79,5 @@ class EDAAnalyzer:
         self.plot_correlation_heatmap(df, "numeric_feature_correlation.png")
         self.plot_capacity_vs_generation(df, "capacity_vs_generation.png")
         self.plot_boxplot(df, config.NUMERIC_FEATURE_COLS, "numeric_feature_boxplot.png",
-                           "Boxplot of Numeric Features")
+                          "Boxplot of Numeric Features")
         logger.info("EDA complete")

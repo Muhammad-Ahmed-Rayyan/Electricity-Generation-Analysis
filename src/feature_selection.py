@@ -1,11 +1,11 @@
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+import matplotlib.pyplot as plt  # noqa: E402
+import pandas as pd  # noqa: E402
+from sklearn.preprocessing import LabelEncoder  # noqa: E402
 
-from src import config
-from src.utils import get_logger
+from src import config  # noqa: E402
+from src.utils import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 
