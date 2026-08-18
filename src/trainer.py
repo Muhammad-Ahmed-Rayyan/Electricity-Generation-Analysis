@@ -1,3 +1,5 @@
+import json
+
 import joblib
 import numpy as np
 from sklearn.metrics import make_scorer, mean_squared_error
@@ -22,6 +24,7 @@ class ModelTrainer:
 
     def __init__(self, models_dir=config.MODELS_DIR):
         self.models_dir = models_dir
+        self.tuning_log = []
 
     def tune(self, spec: ModelSpec, X, y, cv: int = 5):
         if not spec.param_grid:
@@ -37,8 +40,16 @@ class ModelTrainer:
             n_jobs=-1,
         )
         search.fit(X, y)
+
+        self.tuning_log.append({
+            "model": spec.name,
+            "best_params": search.best_params_,
+            "best_cv_rmse": float(-search.best_score_),
+            "param_grid_searched": spec.param_grid,
+        })
+
         logger.info("Best params for %s: %s (CV RMSE=%.4f)",
-                    spec.name, search.best_params_, -search.best_score_)
+                     spec.name, search.best_params_, -search.best_score_)
         return search.best_estimator_
 
     def train(self, spec: ModelSpec, X_train, y_train, tune: bool = False):
@@ -51,6 +62,12 @@ class ModelTrainer:
 
     def save_model(self, model, model_key: str):
         path = self.models_dir / f"{model_key}.pkl"
-        joblib.dump(model, path)
+        joblib.dump(model, path, compress=3)
         logger.info("Saved model -> %s", path)
         return path
+
+    def save_tuning_log(self):
+        path = config.MODEL_COMPARISON_DIR / "hyperparameter_tuning_log.json"
+        with open(path, "w") as f:
+            json.dump(self.tuning_log, f, indent=2)
+        logger.info("Saved hyperparameter tuning log -> %s", path)

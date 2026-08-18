@@ -9,6 +9,8 @@ from scipy.stats import norm  # noqa: E402
 from src import config  # noqa: E402
 from src.utils import get_logger  # noqa: E402
 
+import missingno as msno
+
 logger = get_logger(__name__)
 
 
@@ -81,3 +83,20 @@ class EDAAnalyzer:
         self.plot_boxplot(df, config.NUMERIC_FEATURE_COLS, "numeric_feature_boxplot.png",
                           "Boxplot of Numeric Features")
         logger.info("EDA complete")
+
+    def plot_missing_value_matrix(self, df: pd.DataFrame, filename: str):
+        """Visualizes WHERE missing values occur, run on raw data pre-cleaning."""
+        msno.matrix(df, figsize=(12, 6))
+        plt.savefig(self.output_dir / filename, bbox_inches="tight")
+        plt.close()
+
+    def plot_missing_value_bar(self, df: pd.DataFrame, filename: str):
+        plt.figure(figsize=(12, 6))
+        msno.bar(df)
+        self._save(filename)
+
+    def run_raw_data_eda(self, raw_df: pd.DataFrame):
+        """Run BEFORE cleaning — shows the data quality problem visually."""
+        logger.info("Running EDA on RAW (uncleaned) data")
+        self.plot_missing_value_matrix(raw_df, "raw_missing_value_matrix.png")
+        self.plot_missing_value_bar(raw_df, "raw_missing_value_bar.png")
