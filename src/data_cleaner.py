@@ -50,7 +50,7 @@ class DataCleaner:
         df = df.copy()
         df.loc[(df["latitude"] < -90) | (df["latitude"] > 90), "latitude"] = np.nan
         df.loc[(df["longitude"] < -180) | (df["longitude"] > 180), "longitude"] = np.nan
-        return df        
+        return df
 
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
         df = self.drop_irrelevant_columns(df)
