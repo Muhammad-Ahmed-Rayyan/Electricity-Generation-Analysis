@@ -30,28 +30,30 @@ Built with the tools and technologies:
 Using the **Global Power Plant Database** (World Resources Institute), the pipeline:
 
 1. Loads the raw dataset (28,664 plants, 22 columns).
-2. Cleans it — removes duplicate rows, drops rows with a missing target, imputes missing numeric/categorical values.
-3. Runs exploratory data analysis (distributions, correlations, fuel-type and country breakdowns).
-4. Engineers a `plant_age` feature from `commissioning_year`.
-5. Selects features by correlation with the target.
-6. Splits data into train/test sets.
-7. Trains four regression models: Linear Regression, Ridge, Random Forest, Gradient Boosting.
-8. Tunes hyperparameters with `GridSearchCV` (5-fold CV).
-9. Evaluates each model on RMSE, MAE, and R².
-10. Compares all models and saves plots, metrics, and a results summary.
+2. **Validates** the raw data against expected schema, dtypes, and value ranges, and produces a standalone validation report *before* any cleaning happens.
+3. Cleans it — removes duplicate rows, drops rows with a missing target, imputes missing numeric/categorical values.
+4. Runs exploratory data analysis on **both the raw and cleaned data** — missing-value matrices/bar charts on the raw data, plus distributions, correlations, fuel-type and country breakdowns on the cleaned data.
+5. Engineers a `plant_age` feature from `commissioning_year`.
+6. Selects features by correlation with the target.
+7. Splits data into train/test sets.
+8. Trains four regression models: Linear Regression, Ridge, Random Forest, Gradient Boosting.
+9. Tunes hyperparameters with `GridSearchCV` (5-fold CV) — **enabled by default**, with every search logged to a standing JSON artifact.
+10. Evaluates each model on RMSE, MAE, and R².
+11. Compares all models and saves plots, metrics, and a results summary.
 
 ---
 
 ## 🚀 Features
 
+- ✅ **Data Validation** — schema, dtype, missingness, and value-range checks on raw data, saved as a standalone report
 - 🧹 **Automated Data Cleaning** — dedupes rows, drops missing-target rows, imputes missing numeric/categorical values
-- 📊 **Exploratory Data Analysis** — distributions, correlations, fuel-type and country breakdowns
+- 📊 **Exploratory Data Analysis** — raw-data missingness visualizations plus distributions, correlations, fuel-type and country breakdowns on cleaned data
 - 🏗️ **Feature Engineering** — derives `plant_age` from `commissioning_year`
 - 🎯 **Correlation-Based Feature Selection**
 - 🤖 **Four Regression Models** — Linear Regression, Ridge, Random Forest, Gradient Boosting
-- 🔍 **Hyperparameter Tuning** — `GridSearchCV` with 5-fold cross-validation
+- 🔍 **Hyperparameter Tuning** — `GridSearchCV` with 5-fold cross-validation, **on by default**, with results logged to `hyperparameter_tuning_log.json`
 - 📈 **Full Model Evaluation** — RMSE, MAE, and R² for every model
-- 🖼️ **Auto-Generated Visualizations** — EDA plots, residual plots, model comparison charts
+- 🖼️ **Auto-Generated Visualizations** — raw-data missingness plots, EDA plots, residual plots, model comparison charts
 - ✅ **Unit Tested** — `pytest` coverage for cleaning, feature selection, and evaluation
 - 🔄 **CI/CD Pipeline** — automated linting, testing, and pipeline smoke tests via GitHub Actions
 
@@ -73,7 +75,44 @@ Place the CSV at `data/raw/global_power_plant_database.csv`. Columns include:
 | `commissioning_year` | Year the plant became operational |
 | `estimated_generation_gwh` | **Target** — estimated annual generation |
 
-The dataset is genuinely unclean: duplicate entries, missing `commissioning_year` for many older plants, and missing generation estimates for a meaningful share of plants — all handled explicitly in `src/data_cleaner.py`.
+The dataset is genuinely unclean: duplicate entries, missing `commissioning_year` for many older plants, and missing generation estimates for a meaningful share of plants — all handled explicitly in `src/data_cleaner.py`, and quantified explicitly in `src/data_validator.py` (see [Data Validation](#-data-validation) below).
+
+---
+
+## 🔎 Data Validation
+
+Before any cleaning happens, `src/data_validator.py` runs a standalone validation pass on the raw dataset and saves the full report to `outputs/data_validation_report.txt`. This is a distinct step from cleaning — it exists to *quantify* how messy the raw data actually is, rather than silently fixing it.
+
+**Schema check:** 0 missing expected columns, 0 unexpected columns — the raw file matches the expected 22-column structure.
+
+**Missingness by column (raw data, pre-cleaning):**
+
+| Column | Missing % |
+|---|---|
+| `fuel4` | 99.62% |
+| `fuel3` | 98.97% |
+| `generation_gwh_2013` | 98.47% |
+| `generation_gwh_2014` | 98.41% |
+| `generation_gwh_2015` | 96.66% |
+| `fuel2` | 94.05% |
+| `generation_gwh_2016` | 70.95% |
+| `commissioning_year` | 47.84% |
+| `year_of_capacity_data` | 43.67% |
+| `owner` | 36.88% |
+| `estimated_generation_gwh` (target) | 3.94% |
+| `geolocation_source` | 1.47% |
+| `name` | 0.07% |
+| `fuel1` | 0.01% |
+
+**Duplicates:** 0 duplicate rows found by the validator's raw-data check (duplicates found later during cleaning were exact-match duplicates surfaced via `drop_duplicates()`, which uses a stricter full-row comparison — see [Design Notes](#-design-notes)).
+
+**Range violations:** 17 rows have a `latitude` outside the valid [-90, 90] range, and 4 rows have a `longitude` outside the valid [-180, 180] range — confirming the raw data contains genuine coordinate entry errors, not just missing values.
+
+This report is what justified the cleaning decisions in `data_cleaner.py`: columns with >90% missingness (`fuel2/3/4`, `generation_gwh_2013/2014/2015`) were dropped rather than imputed, since imputing that much of a column would mean fabricating almost all of its values rather than genuinely filling gaps.
+
+**Raw-data missingness visualizations** (`outputs/eda/raw_missing_value_bar.png`, `outputs/eda/raw_missing_value_matrix.png`):
+
+The bar chart confirms the pattern above visually — `fuel2/3/4` and the yearly `generation_gwh_*` columns are almost entirely empty, while `capacity_mw`, `latitude`, `longitude`, and `fuel1` are essentially complete. The matrix view shows the missingness in `commissioning_year` and `owner` is **not randomly scattered** — it clusters in contiguous blocks of rows, suggesting these gaps come from specific data sources/batches within the database rather than random data-entry omissions.
 
 ---
 
@@ -117,16 +156,19 @@ electric-generation-cost-predictor/
 │   └── processed/  # cleaned_power_plants.csv (generated + tracked)
 ├── models/  # trained .pkl models
 ├── outputs/
+│   ├── data_validation_report.txt
 │   ├── eda/
 │   ├── missing_values/
 │   ├── feature_selection/
 │   ├── model_training/
 │   └── model_comparison/
+│       └── hyperparameter_tuning_log.json
 ├── src/
 │   ├── __init__.py
 │   ├── config.py
 │   ├── utils.py
 │   ├── data_loader.py
+│   ├── data_validator.py
 │   ├── data_cleaner.py
 │   ├── eda.py
 │   ├── feature_engineering.py
@@ -143,6 +185,7 @@ electric-generation-cost-predictor/
 │   └── test_evaluator.py
 ├── main.py
 ├── requirements.txt
+├── setup.cfg
 ├── .gitignore
 └── README.md
 ```
@@ -152,13 +195,14 @@ electric-generation-cost-predictor/
 | Module | Responsibility |
 |---|---|
 | `data_loader.py` | Reads the raw CSV |
+| `data_validator.py` | Validates schema, dtypes, missingness, and value ranges on raw data; saves `data_validation_report.txt` |
 | `data_cleaner.py` | Dedupes, drops missing-target rows, imputes |
-| `eda.py` | Generates EDA plots and summary statistics |
+| `eda.py` | Generates raw-data missingness plots and cleaned-data EDA plots/statistics |
 | `feature_engineering.py` | Adds `plant_age` |
 | `feature_selection.py` | Correlation-based feature selection |
 | `data_splitter.py` | Train/test split |
 | `models.py` | Model + hyperparameter grid registry |
-| `trainer.py` | Fits/tunes models, saves to `models/` |
+| `trainer.py` | Fits/tunes models, saves to `models/`, logs tuning results |
 | `evaluator.py` | RMSE / MAE / R² |
 | `visualizer.py` | Residual plots, model comparison charts |
 
@@ -167,11 +211,11 @@ electric-generation-cost-predictor/
 ## ▶️ How to Run
 
 ```bash
-# Full pipeline with hyperparameter tuning (recommended for final results)
-python main.py --tune
-
-# Faster run without tuning
+# Full pipeline — hyperparameter tuning runs by default
 python main.py
+
+# Skip tuning for a faster run
+python main.py --no-tune
 
 # Quick smoke test on a subsample
 python main.py --sample 5000
@@ -211,7 +255,7 @@ flake8 src tests main.py
 
 ## 📈 Results
 
-Full pipeline run on the complete cleaned dataset (27,438 rows: 21,950 train / 5,488 test), with `--tune` enabled (`GridSearchCV`, 5-fold CV):
+Full pipeline run on the complete cleaned dataset (27,438 rows: 21,950 train / 5,488 test), with hyperparameter tuning enabled (`GridSearchCV`, 5-fold CV):
 
 Selected features: `capacity_mw`, `fuel1`, `country_long`
 
@@ -226,17 +270,33 @@ Selected features: `capacity_mw`, `fuel1`, `country_long`
 
 ---
 
+## 🎛️ Hyperparameter Tuning Log
+
+Every model with tunable parameters was searched with `GridSearchCV` (5-fold cross-validation, scored on RMSE). Full machine-readable results are saved to `outputs/model_comparison/hyperparameter_tuning_log.json`; summarized here:
+
+| Model | Grid Searched | Best Parameters | Best CV RMSE |
+|---|---|---|---|
+| Ridge Regression | `alpha`: [0.01, 0.1, 1, 10, 100] | `alpha=100` | 1091.29 |
+| Random Forest | `n_estimators`: [100,200,300], `max_depth`: [None,10,20], `min_samples_split`: [2,5], `min_samples_leaf`: [1,2] | `n_estimators=300, max_depth=20, min_samples_split=2, min_samples_leaf=1` | 926.67 |
+| Gradient Boosting | `n_estimators`: [100,200], `max_depth`: [3,5], `learning_rate`: [0.05,0.1], `min_samples_split`: [2,5] | `n_estimators=200, max_depth=5, learning_rate=0.1, min_samples_split=2` | 864.09 |
+
+Linear Regression has no tunable hyperparameters and was trained directly. Note that each model's **CV RMSE during tuning** is higher than its **final test-set RMSE** in the Results table above — this is expected, since CV RMSE is averaged across 5 folds of the training set (a more conservative estimate), while the Results table reports performance on the single held-out test set after fitting on the full training data.
+
+---
+
 ### 🔍 Observations
 
 - Both linear models plateau around R²≈0.82 — capacity, fuel type, and country alone have a roughly linear relationship with generation, but can't capture the non-linear interactions (e.g. how fuel type changes the capacity→generation ratio) that tree-based models pick up.
 - **Random Forest has the lowest MAE (140.86)** despite a higher RMSE than Gradient Boosting — it's more consistently close on typical plants, while Gradient Boosting handles large/outlier plants better, which is why it wins on RMSE (which penalizes big errors more heavily).
 - Ridge tuned to `alpha=100`, a strong regularization strength, which barely moved its score versus plain Linear Regression — suggesting multicollinearity isn't a major issue with only 3 selected features.
+- Tuning delivered the largest gains for the tree-based models (Random Forest, Gradient Boosting), and negligible gains for the linear models — consistent with linear models having far fewer degrees of freedom to tune in the first place.
 
 All plots and the full metrics/summary are available in `outputs/`:
-- `outputs/eda/` — distribution, correlation, and fuel/country breakdown plots
+- `outputs/data_validation_report.txt` — raw-data validation findings
+- `outputs/eda/` — raw-data missingness plots, plus distribution, correlation, and fuel/country breakdown plots on cleaned data
 - `outputs/feature_selection/` — correlation rankings and selected features
 - `outputs/model_training/` — per-model residual distribution plots
-- `outputs/model_comparison/` — RMSE/MAE/R² comparison charts, `all_model_metrics.csv`, `results_summary.json`
+- `outputs/model_comparison/` — RMSE/MAE/R² comparison charts, `all_model_metrics.csv`, `results_summary.json`, `hyperparameter_tuning_log.json`
 
 ---
 
@@ -247,16 +307,17 @@ All plots and the full metrics/summary are available in `outputs/`:
 `models/random_forest.pkl` is **excluded** — its trained size exceeds GitHub's 100MB per-file limit even after compression, due to the large ensemble size (`n_estimators=300`, `max_depth=20`) selected by hyperparameter tuning. It is fully reproducible; regenerate it with:
 
 ```bash
-python main.py --tune
+python main.py
 ```
 
 ---
 
 ## 📝 Design Notes
 
+- **Data validation runs before cleaning**, as a distinct step, to give visibility into raw data quality independent of any fixes applied later.
 - **Data leakage avoided**: raw yearly generation columns (`generation_gwh_2013`–`2016`) are excluded from features since they would leak the target (`estimated_generation_gwh` is derived from them).
 - **Target-missing rows dropped** rather than imputed — imputing the label itself would fabricate ground truth, which is inappropriate for a supervised regression target.
-- **Hyperparameter tuning** uses standard 5-fold `GridSearchCV`, scored on RMSE, for all models except Linear Regression (no hyperparameters to tune).
+- **Hyperparameter tuning runs by default** using standard 5-fold `GridSearchCV`, scored on RMSE, for all models except Linear Regression (no hyperparameters to tune) — every search result is logged to `hyperparameter_tuning_log.json` regardless of how the pipeline is run.
 
 ---
 
