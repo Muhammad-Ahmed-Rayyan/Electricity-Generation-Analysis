@@ -75,6 +75,36 @@ Place the CSV at `data/raw/global_power_plant_database.csv`. Columns include:
 | `commissioning_year` | Year the plant became operational |
 | `estimated_generation_gwh` | **Target** — estimated annual generation |
 
+**Feature correlation with target** (`estimated_generation_gwh`), from `outputs/feature_selection/correlation_with_target.csv`:
+
+| Feature | Correlation |
+|---|---|
+| `capacity_mw` | 0.909 |
+| `fuel1` | 0.278 |
+| `country_long` | 0.050 |
+| `commissioning_year` | 0.010 |
+| `plant_age` | 0.010 |
+| `latitude` | 0.003 |
+| `longitude` | 0.002 |
+
+`capacity_mw` is by far the dominant predictor (0.909 correlation) — consistent with the domain intuition that a plant's generation is fundamentally capped by its capacity. `fuel1` and `country_long` passed the 0.02 selection threshold and were kept; `commissioning_year`, `plant_age`, `latitude`, and `longitude` fell below it and were excluded from the final feature set.
+
+**Numeric feature summary** (cleaned data, 27,438 rows, post coordinate-fix), from `outputs/eda/summary_statistics.csv`:
+
+| Statistic | capacity_mw | latitude | longitude | commissioning_year | estimated_generation_gwh |
+|---|---|---|---|---|---|
+| Mean | 181.86 | 32.06 | -14.95 | 1999.04 | 808.998 |
+| Std Dev | 518.63 | 24.10 | 76.61 | 17.74 | 2691.91 |
+| Min | 1.0 | -53.79 | -171.71 | 1896 | 0.0 |
+| 25% | 4.9 | 28.83 | -79.84 | 2003 | 8.16 |
+| 50% (median) | 18.5 | 40.03 | -5.07 | 2004 | 44.84 |
+| 75% | 95.0 | 46.65 | 16.75 | 2005 | 294.19 |
+| Max | 22,500 | 71.29 | 177.48 | 2018 | 92,268.76 |
+
+Latitude and longitude ranges are now fully valid (±90° / ±180°) — an earlier version of the cleaning pipeline imputed missing coordinates but didn't correct out-of-range ones (caught by the data validator), which has since been fixed with an explicit coordinate-clipping step in `data_cleaner.py`.
+
+The wide gap between the median (44.84 GWh) and mean (808.998 GWh) for generation confirms strong right-skew — a small number of very large plants pull the average far above what a typical plant produces, which matches the long tail visible in `outputs/eda/target_distribution.png`.
+
 The dataset is genuinely unclean: duplicate entries, missing `commissioning_year` for many older plants, and missing generation estimates for a meaningful share of plants — all handled explicitly in `src/data_cleaner.py`, and quantified explicitly in `src/data_validator.py` (see [Data Validation](#-data-validation) below).
 
 ---

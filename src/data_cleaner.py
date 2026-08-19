@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.impute import SimpleImputer
 
 from src import config
@@ -44,10 +45,19 @@ class DataCleaner:
         logger.info("Imputed %d numeric / %d categorical columns", len(numeric_cols), len(categorical_cols))
         return df
 
+    @staticmethod
+    def clip_invalid_coordinates(df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df.loc[(df["latitude"] < -90) | (df["latitude"] > 90), "latitude"] = np.nan
+        df.loc[(df["longitude"] < -180) | (df["longitude"] > 180), "longitude"] = np.nan
+        return df        
+
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
         df = self.drop_irrelevant_columns(df)
         df = self.remove_duplicates(df)
         df = self.drop_missing_target(df)
+        df = self.impute_missing_values(df)
+        df = self.clip_invalid_coordinates(df)
         df = self.impute_missing_values(df)
         df.to_csv(config.DATA_PROCESSED_DIR / "cleaned_power_plants.csv", index=False)
         return df
