@@ -48,8 +48,10 @@ class ModelTrainer:
             "param_grid_searched": spec.param_grid,
         })
 
-        logger.info("Best params for %s: %s (CV RMSE=%.4f)",
-                     spec.name, search.best_params_, -search.best_score_)
+        logger.info(
+            "Best params for %s: %s (CV RMSE=%.4f)",
+            spec.name, search.best_params_, -search.best_score_,
+        )
         return search.best_estimator_
 
     def train(self, spec: ModelSpec, X_train, y_train, tune: bool = False):

@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+import missingno as msno  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import seaborn as sns  # noqa: E402
@@ -8,8 +9,6 @@ from scipy.stats import norm  # noqa: E402
 
 from src import config  # noqa: E402
 from src.utils import get_logger  # noqa: E402
-
-import missingno as msno
 
 logger = get_logger(__name__)
 

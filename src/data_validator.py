@@ -14,10 +14,10 @@ EXPECTED_COLUMNS = [
 ]
 
 VALID_RANGES = {
-    "capacity_mw": (0, 25000),          # largest real plants are ~22,500 MW
+    "capacity_mw": (0, 25000),
     "latitude": (-90, 90),
     "longitude": (-180, 180),
-    "commissioning_year": (1880, 2026),  # first power plants ~1880s
+    "commissioning_year": (1880, 2026),
 }
 
 
@@ -34,8 +34,10 @@ class DataValidator:
     def validate_schema(self, df: pd.DataFrame) -> bool:
         missing_cols = [c for c in EXPECTED_COLUMNS if c not in df.columns]
         extra_cols = [c for c in df.columns if c not in EXPECTED_COLUMNS]
-        self._log(f"Schema check: {len(missing_cols)} missing expected columns, "
-                   f"{len(extra_cols)} unexpected columns")
+        self._log(
+            f"Schema check: {len(missing_cols)} missing expected columns, "
+            f"{len(extra_cols)} unexpected columns"
+        )
         if missing_cols:
             self._log(f"  Missing: {missing_cols}")
         if extra_cols:
@@ -51,7 +53,8 @@ class DataValidator:
 
     def validate_duplicates(self, df: pd.DataFrame) -> int:
         n_dupes = df.duplicated().sum()
-        self._log(f"Duplicate rows found: {n_dupes} ({n_dupes / len(df) * 100:.2f}%)")
+        pct = n_dupes / len(df) * 100
+        self._log(f"Duplicate rows found: {n_dupes} ({pct:.2f}%)")
         return n_dupes
 
     def validate_value_ranges(self, df: pd.DataFrame) -> dict:
@@ -62,8 +65,10 @@ class DataValidator:
             out_of_range = df[(df[col] < low) | (df[col] > high)]
             violations[col] = len(out_of_range)
             if len(out_of_range) > 0:
-                self._log(f"Range violation: {col} has {len(out_of_range)} values "
-                           f"outside expected [{low}, {high}]")
+                self._log(
+                    f"Range violation: {col} has {len(out_of_range)} values "
+                    f"outside expected [{low}, {high}]"
+                )
         return violations
 
     def validate_dtypes(self, df: pd.DataFrame) -> dict:

@@ -23,9 +23,9 @@ logger = get_logger("pipeline")
 def parse_args():
     parser = argparse.ArgumentParser(description="Power Plant Generation Predictor pipeline")
     parser.add_argument(
-    "--no-tune",
-    action="store_true",
-    help="Skip hyperparameter tuning (tuning runs by default)",
+        "--no-tune",
+        action="store_true",
+        help="Skip hyperparameter tuning (tuning runs by default)",
     )
     parser.add_argument(
         "--sample",
@@ -45,6 +45,10 @@ def main():
 
     logger.info("STEP 2/9: Validating raw data")
     validation_result = DataValidator().run(raw_df)
+    logger.info(
+        "Validation summary: schema_ok=%s, duplicates=%d",
+        validation_result["schema_ok"], validation_result["n_duplicates"],
+    )
 
     logger.info("STEP 3/9: Cleaning data")
     clean_df = DataCleaner().run(raw_df)
